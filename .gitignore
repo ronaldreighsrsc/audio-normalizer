@@ -1,0 +1,22 @@
+# Ambientes virtuales
+venv/
+env/
+.venv/
+.env
+
+# Archivos compilados o en caché de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configuración de IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignorar todo el contenido de input y output excepto sus respectivos .gitkeep
+/input/*
+!/input/.gitkeep
+/output/*
+!/output/.gitkeep

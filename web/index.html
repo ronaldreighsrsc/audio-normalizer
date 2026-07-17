@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soundwave — Reproductor y Recortador de Audio Pro</title>
+  
+  <!-- Google Fonts: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="logo">
+        <i class="fa-solid fa-compact-disc logo-icon"></i>
+        <div class="brand">
+          <h1>Soundwave</h1>
+          <span class="subtitle">Player & Pro Audio Trimmer</span>
+        </div>
+      </div>
+      <div class="server-status">
+        <span class="status-indicator online"></span>
+        <span id="status-text">Conectado (Localhost)</span>
+      </div>
+    </header>
+
+    <div class="main-layout">
+      
+      <!-- Left Sidebar (Files and Upload) -->
+      <aside class="sidebar">
+        
+        <!-- Upload Section -->
+        <div class="sidebar-section glass-card">
+          <h3><i class="fa-solid fa-cloud-arrow-up icon-accent"></i> Importar Audio</h3>
+          <form id="upload-form" class="upload-area">
+            <input type="file" id="audio-file-input" accept="audio/*" required hidden>
+            <input type="file" id="lrc-file-input" accept=".lrc" hidden>
+            
+            <div class="drag-drop-zone" id="drop-zone">
+              <i class="fa-solid fa-music upload-icon"></i>
+              <p class="upload-title">Arrastra tus archivos de audio aquí</p>
+              <p class="upload-subtitle">o haz clic para explorar</p>
+            </div>
+            
+            <!-- Optional LRC Upload -->
+            <div class="optional-lrc">
+              <label for="lrc-file-input" class="lrc-upload-btn" id="lrc-label">
+                <i class="fa-solid fa-file-lines"></i> Agregar letra (.lrc) - Opcional
+              </label>
+              <span id="lrc-filename" class="file-badge-text"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" id="upload-submit-btn" disabled>
+              <i class="fa-solid fa-upload"></i> Subir a la biblioteca
+            </button>
+          </form>
+          
+          <div class="upload-progress-bar" id="upload-progress-container" style="display: none;">
+            <div class="progress-fill" id="upload-progress-fill" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Library Section -->
+        <div class="sidebar-section glass-card flex-grow">
+          <div class="section-header">
+            <h3><i class="fa-solid fa-folder-open icon-accent"></i> Biblioteca</h3>
+            <button class="btn-icon" id="refresh-library" title="Refrescar biblioteca">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+          
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="library-search" placeholder="Buscar canciones...">
+          </div>
+
+          <!-- Tabs for Library -->
+          <div class="library-tabs">
+            <button class="tab-btn active" id="tab-input-btn">Entrada <span class="badge" id="count-input">0</span></button>
+            <button class="tab-btn" id="tab-output-btn">Procesados <span class="badge" id="count-output">0</span></button>
+          </div>
+
+          <!-- Files List Container -->
+          <div class="files-list scrollbar" id="files-list">
+            <div class="loading-placeholder">
+              <i class="fa-solid fa-spinner fa-spin"></i> Cargando biblioteca...
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Main Workspace -->
+      <main class="workspace">
+        
+        <!-- Welcome Card if no file loaded -->
+        <div class="welcome-screen glass-card" id="welcome-screen">
+          <div class="welcome-content">
+            <div class="vinyl-glow">
+              <i class="fa-solid fa-circle-play welcome-play-icon"></i>
+            </div>
+            <h2>Bienvenido a Soundwave</h2>
+            <p>Selecciona un archivo de audio de la biblioteca o sube uno nuevo para comenzar a reproducir, editar y normalizar con calidad de estudio profesional.</p>
+            <button class="btn btn-primary" onclick="document.getElementById('audio-file-input').click()">
+              <i class="fa-solid fa-plus"></i> Importar Primer Audio
+            </button>
+          </div>
+        </div>
+
+        <!-- Main Studio (Visible when file loaded) -->
+        <div class="studio-container" id="studio-container" style="display: none;">
+          
+          <!-- Top Metadata Row -->
+          <div class="track-header glass-card">
+            <div class="track-info-detail">
+              <div class="track-tag" id="track-folder-badge">INPUT</div>
+              <h2 id="current-track-title">Nombre de la Canción.mp3</h2>
+            </div>
+            <div class="track-meta">
+              <div class="meta-item"><i class="fa-solid fa-clock"></i> <span id="meta-duration">0:00</span></div>
+              <div class="meta-item"><i class="fa-solid fa-file-audio"></i> <span id="meta-size">0.0 MB</span></div>
+              <div class="meta-item" id="meta-lyrics-status"><i class="fa-solid fa-quote-right"></i> Sin letras</div>
+            </div>
+          </div>
+
+          <!-- Player & Visualizer Column -->
+          <div class="player-panel glass-card">
+            <div class="player-body">
+              
+              <!-- Disc Animation Box -->
+              <div class="disc-container">
+                <div class="vinyl-disc" id="vinyl-disc">
+                  <div class="vinyl-center"></div>
+                  <i class="fa-solid fa-music vinyl-music-note"></i>
+                </div>
+                <div class="disc-glow"></div>
+              </div>
+
+              <!-- Live Lyrics Viewer / Visualizer Box -->
+              <div class="visualizer-lyrics-container">
+                
+                <!-- Tab Controls for visualizer vs lyrics -->
+                <div class="player-screen-tabs">
+                  <button class="screen-tab active" id="btn-screen-vis"><i class="fa-solid fa-chart-simple"></i> Visualizador</button>
+                  <button class="screen-tab" id="btn-screen-lyrics" style="display: none;"><i class="fa-solid fa-quote-left"></i> Letras Sincronizadas</button>
+                </div>
+
+                <div class="player-screen-content">
+                  <!-- Visualizer Canvas -->
+                  <canvas id="vis-canvas" class="player-canvas active"></canvas>
+                  
+                  <!-- Sync Lyrics Container -->
+                  <div id="lyrics-container" class="lyrics-view scrollbar">
+                    <p class="lyrics-placeholder">Reproduce el audio para ver las letras sincronizadas aquí</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Player Progress Timeline -->
+            <div class="timeline-container">
+              <span class="time-label" id="current-time">0:00</span>
+              <div class="progress-bar-wrapper" id="progress-wrapper">
+                <div class="progress-bar-bg"></div>
+                <div class="progress-bar-fill" id="player-progress-fill"></div>
+                <div class="progress-bar-handle" id="player-progress-handle"></div>
+              </div>
+              <span class="time-label" id="total-time">0:00</span>
+            </div>
+
+            <!-- Main Audio Playback Controls -->
+            <div class="playback-controls">
+              <div class="controls-group">
+                <button class="control-btn" id="btn-prev" title="Canción anterior"><i class="fa-solid fa-backward-step"></i></button>
+                <button class="control-btn play-btn" id="btn-play-pause" title="Reproducir/Pausar"><i class="fa-solid fa-play"></i></button>
+                <button class="control-btn" id="btn-next" title="Siguiente canción"><i class="fa-solid fa-forward-step"></i></button>
+              </div>
+
+              <div class="controls-group volume-group">
+                <button class="control-btn small-btn" id="btn-mute" title="Silenciar"><i class="fa-solid fa-volume-high"></i></button>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.01" value="0.8" class="volume-slider">
+              </div>
+
+              <div class="controls-group">
+                <button class="control-btn small-btn" id="btn-loop" title="Repetir pista"><i class="fa-solid fa-arrows-spin"></i></button>
+                <button class="control-btn small-btn" id="btn-zoom-to-trim" title="Hacer zoom a selección"><i class="fa-solid fa-maximize"></i></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Advanced Audio Trimmer Panel -->
+          <div class="trimmer-panel glass-card">
+            <div class="trimmer-header">
+              <h3><i class="fa-solid fa-scissors icon-accent"></i> Herramienta de Recorte</h3>
+              <p class="panel-subtitle">Arrastra las manijas en la onda o ajusta los valores de tiempo a continuación para definir tu corte</p>
+            </div>
+
+            <!-- Wavesurfer Waveform Container -->
+            <div class="waveform-box">
+              <div id="waveform-loading" class="wave-loader" style="display: none;">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Generando forma de onda...
+              </div>
+              <!-- This is where WaveSurfer renders the canvas -->
+              <div id="waveform"></div>
+              <!-- Timeline component under wavesurfer -->
+              <div id="wave-timeline"></div>
+            </div>
+
+            <!-- Trimmer Controls (Zoom & Quick actions) -->
+            <div class="trimmer-waveform-actions">
+              <button class="btn btn-secondary btn-sm" id="btn-zoom-in"><i class="fa-solid fa-magnifying-glass-plus"></i> Acercar</button>
+              <button class="btn btn-secondary btn-sm" id="btn-zoom-out"><i class="fa-solid fa-magnifying-glass-minus"></i> Alejar</button>
+              <button class="btn btn-secondary btn-sm" id="btn-reset-zoom"><i class="fa-solid fa-compress"></i> Ajustar Onda</button>
+              <div class="spacer"></div>
+              <button class="btn btn-secondary btn-sm" id="btn-play-selection"><i class="fa-solid fa-play-circle"></i> Escuchar Selección</button>
+            </div>
+
+            <!-- Cut Values Row -->
+            <div class="trimmer-inputs-grid">
+              <div class="time-input-group">
+                <label>Tiempo de Inicio (s)</label>
+                <div class="input-with-button">
+                  <input type="number" id="trim-start" min="0" step="0.01" value="0.00">
+                  <button class="btn-inside" id="btn-set-start" title="Fijar tiempo de inicio en la posición del reproductor">Fijar</button>
+                </div>
+              </div>
+
+              <div class="time-input-group">
+                <label>Tiempo de Fin (s)</label>
+                <div class="input-with-button">
+                  <input type="number" id="trim-end" min="0" step="0.01" value="10.00">
+                  <button class="btn-inside" id="btn-set-end" title="Fijar tiempo de fin en la posición del reproductor">Fijar</button>
+                  <button class="btn-inside" id="btn-set-max" title="Fijar tiempo de fin al máximo de la pista">Max</button>
+                </div>
+              </div>
+
+              <div class="time-input-group span-2">
+                <label>Nombre del Archivo de Salida</label>
+                <div class="input-with-badge">
+                  <input type="text" id="trim-output-name" placeholder="trimmed_cancion">
+                  <span class="input-badge" id="trim-output-ext">.mp3</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Normalization & DSP Selection Cards -->
+            <div class="dsp-selection-container">
+              <label class="dsp-title">Procesamiento y Normalización de Audio</label>
+              
+              <div class="dsp-cards-grid">
+                
+                <!-- Option 1: No Normalization -->
+                <label class="dsp-card-label">
+                  <input type="radio" name="dsp-mode" value="trim_only" checked hidden>
+                  <div class="dsp-card">
+                    <div class="card-icon"><i class="fa-solid fa-scissors"></i></div>
+                    <div class="card-info">
+                      <h4>Solo Recortar</h4>
+                      <p>Corta el audio a la duración seleccionada sin alterar el volumen original ni las frecuencias.</p>
+                    </div>
+                  </div>
+                </label>
+
+                <!-- Option 2: Basic Normalization -->
+                <label class="dsp-card-label">
+                  <input type="radio" name="dsp-mode" value="trim_basic" hidden>
+                  <div class="dsp-card">
+                    <div class="card-icon"><i class="fa-solid fa-sliders"></i></div>
+                    <div class="card-info">
+                      <h4>Normalización RMS</h4>
+                      <p>Iguala la sonoridad media de la selección al estándar de la industria (-14 dBFS). Ideal para podcasts y audiolibros.</p>
+                    </div>
+                  </div>
+                </label>
+
+                <!-- Option 3: Pro Normalization -->
+                <label class="dsp-card-label">
+                  <input type="radio" name="dsp-mode" value="trim_pro" hidden>
+                  <div class="dsp-card highlight-card">
+                    <div class="card-tag">Recomendado</div>
+                    <div class="card-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <div class="card-info">
+                      <h4>Normalización Pro</h4>
+                      <p>Aplica un pipeline dinámico: compresión suave de volumen, normalización RMS a -14 dBFS y un limitador de picos brick-wall a -1 dBFS para evitar distorsiones.</p>
+                    </div>
+                  </div>
+                </label>
+                
+              </div>
+            </div>
+
+            <!-- Execution Button -->
+            <button class="btn btn-action" id="btn-execute-trim">
+              <i class="fa-solid fa-scissors btn-icon-spin"></i> Recortar y Guardar Archivo
+            </button>
+          </div>
+
+        </div>
+      </main>
+
+    </div>
+
+    <!-- Notification Toasts Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+  </div>
+
+  <!-- App JS Scripts -->
+  <script src="app.js?v=5" type="module"></script>
+</body>
+</html>

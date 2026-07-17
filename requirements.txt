@@ -1,0 +1,8 @@
+# pydub para manipulación de audio
+pydub==0.25.1
+
+# static-ffmpeg provee binarios estáticos de FFmpeg y FFprobe para el entorno virtual
+static-ffmpeg
+
+# Flask para el servidor web y APIs locales
+Flask==3.0.3
